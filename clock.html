@@ -40,22 +40,20 @@
     function update() {
       var date = new Date();
       var hours = date.getHours();
-      // if (hours === 0) {
-      //   hours = 12;
-      // }
-      // if (hours > 12) {
-      //   hours -= 12;
-      // }
       var hoursStr = hours.toString();
-      // var hourTen = "nil";
-      // var hourOne = hours;
+      var hourTen = "0";
+      var hourOne = hoursStr;
       if (hoursStr.length > 1) {
         hourTen = hoursStr[0];
         hourOne = hoursStr[1];
       }
       var minutesStr = date.getMinutes().toString();
-      var minTen = minutesStr[0];
-      var minOne = minutesStr[1];
+      var minTen = "0";
+      var minOne = minutesStr;
+      if (minutesStr.length > 1) {
+        minTen = minutesStr[0];
+        minOne = minutesStr[1];
+      }
       document.getElementsByClassName('hour-ten')[0].setAttribute('class', 'digit hour-ten d' + hourTen);
       document.getElementsByClassName('hour-one')[0].setAttribute('class', 'digit hour-one d' + hourOne);
       document.getElementsByClassName('min-ten')[0].setAttribute('class', 'digit min-ten d' + minTen);
