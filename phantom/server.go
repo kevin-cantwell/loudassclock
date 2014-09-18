@@ -16,7 +16,7 @@ import (
 type RenderServer interface {
 	Start() error
 	Shutdown() error
-	RenderClock() ([]byte, error)
+	RenderClock(tzCode string) ([]byte, error)
 	CurrentLoad() int
 	AtCapacity() bool
 }
@@ -93,7 +93,7 @@ func (s *renderServer) Shutdown() error {
 	return nil
 }
 
-func (s *renderServer) RenderClock() ([]byte, error) {
+func (s *renderServer) RenderClock(tzCode string) ([]byte, error) {
 	if s.AtCapacity() {
 		return nil, errors.New("phantom: at capacity")
 	}
@@ -106,7 +106,7 @@ func (s *renderServer) RenderClock() ([]byte, error) {
 		s.mu.Unlock()
 	}()
 
-	resp, err := http.Get("http://127.0.0.1:" + s.port + "/clock.png")
+	resp, err := http.Get("http://127.0.0.1:" + s.port + "/clock.png?tzCode=" + tzCode)
 	if err != nil {
 		return nil, err
 	}

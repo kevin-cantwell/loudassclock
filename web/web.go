@@ -27,9 +27,9 @@ func main() {
 	prepareForShutdownDown()
 
 	r := mux.NewRouter()
-	r.HandleFunc("/clock.png", ClockRenderHandler).Methods("GET")
+	r.HandleFunc("/{tzCode}/clock.png", ClockRenderHandler).Methods("GET")
 	r.HandleFunc("/images/{file}", ImageHandler).Methods("GET")
-	r.HandleFunc("/", ClockHandler).Methods("GET")
+	r.HandleFunc("/{tzCode:.*}", ClockHandler).Methods("GET")
 	http.Handle("/", r)
 	port := os.Getenv("PORT")
 	log.Info("loudassclock/main", "Starting server...", "port", port)
@@ -54,13 +54,16 @@ func prepareForShutdownDown() {
 }
 
 func ClockHandler(response http.ResponseWriter, request *http.Request) {
+	vars := mux.Vars(request)
+	tzCode := vars["tzCode"]
 	t, err := template.ParseFiles("clock.html")
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(err.Error()))
 		return
 	}
-	t.Execute(response, nil)
+	p := struct{ Timezone string }{Timezone: tzCode}
+	t.Execute(response, &p)
 }
 
 func ImageHandler(response http.ResponseWriter, request *http.Request) {
@@ -69,7 +72,9 @@ func ImageHandler(response http.ResponseWriter, request *http.Request) {
 }
 
 func ClockRenderHandler(response http.ResponseWriter, request *http.Request) {
-	body, err := pool.RenderClock()
+	vars := mux.Vars(request)
+	tzCode := vars["tzCode"]
+	body, err := pool.RenderClock(tzCode)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte("500 Internal Server Error"))

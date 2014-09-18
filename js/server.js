@@ -12,55 +12,68 @@ port = system.args[2];
 server = require('webserver').create();
 
 service = server.listen(port, { keepAlive: true }, function (request, response) {
-    response.headers = {
-      'Cache': 'no-cache',
-      'Content-Type': 'text/plain',
-      'Connection': 'Keep-Alive',
-      'Keep-Alive': 'timeout=5, max=100',
-      'Content-Length': 0
-    };
+  response.headers = {
+    'Cache': 'no-cache',
+    'Content-Type': 'text/plain',
+    'Connection': 'Keep-Alive',
+    'Keep-Alive': 'timeout=5, max=100',
+    'Content-Length': 0
+  };
 
-    if (request.url === '/ping') {
-      response.statusCode = 200;
-      response.closeGracefully();
-      return;
-    }
-    
-    if (request.url.slice(0, 10) !== '/clock.png') {
-      response.statusCode = 404;
-      response.closeGracefully();
-      return;
-    }
+  if (request.url === '/ping') {
+    response.statusCode = 200;
+    response.closeGracefully();
+    return;
+  }
+  
+  if (request.url.slice(0, 10) !== '/clock.png') {
+    response.statusCode = 404;
+    response.closeGracefully();
+    return;
+  }
 
-    render(function (base64Image) {
-      var body = atob(base64Image);
-      response.statusCode = 200;
-      response.setHeader('Content-Length', body.length);
-      response.setHeader('Content-Type', 'image/png');
-      response.setEncoding('binary');
-      response.write(body);
-      response.close();
-    }, function (error) {
-      console.log('phantomjs: ['+port+'] error: ' + identifier + ' ' + error);
-      response.statusCode = 500;
-      response.setHeader('Content-Length', error.length);
-      response.write(error);
-      response.close();
+  var params = {"tzCode": "GMT"};
+  if (request.url.slice('/clock.png'.length)[0] === "?") {
+    query = request.url.slice('/clock.png?'.length);
+    query.split('&').forEach(function (pair) { 
+      var p = pair.split('='); 
+      params[p[0]] = p[1];
     });
+  }
+
+  render(params.tzCode, function (base64Image) {
+    var body = atob(base64Image);
+    response.statusCode = 200;
+    response.setHeader('Content-Length', body.length);
+    response.setHeader('Content-Type', 'image/png');
+    response.setEncoding('binary');
+    response.write(body);
+    response.close();
+  }, function (error) {
+    console.log('phantomjs: ['+port+'] error: ' + identifier + ' ' + error);
+    response.statusCode = 500;
+    response.setHeader('Content-Length', error.length);
+    response.write(error);
+    response.close();
+  });
 });
 
 if (service) {
-    console.log('phantomjs: Web server running on port ' + port);
+  console.log('phantomjs: Web server running on port ' + port);
 } else {
-    console.log('phantomjs: Error: Could not create web server listening on port ' + port);
-    phantom.exit();
+  console.log('phantomjs: Error: Could not create web server listening on port ' + port);
+  phantom.exit();
 }
 
-function render(success, failure) {
+function render(tzCode, success, failure) {
   var page = webPage.create();
   page.zoomFactor = 1;
   page.settings.javascriptEnabled = true;
-  page.open(host, function (status) {
+  page.viewportSize = {
+    width: 1345,
+    height: 710
+  };
+  page.open(host + '/' + tzCode, function (status) {
     if (status !== 'success') {
       failure(status + ' unable to load the permalink');
       page.close();

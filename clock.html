@@ -1,8 +1,14 @@
 <html>
 <head>
   <style>
-    body { background-color: black; }
-    .clock { margin: 0 auto; width: 1220px; position: relative; }
+    body { margin: 10; padding: 0; }
+    /*    
+    .display {
+      filter: grayscale(0) sepia(0) saturate(1) hue-rotate(0deg) invert(0) opacity(1) brightness(1) contrast(2) blur(1px);
+      -webkit-filter: grayscale(0) sepia(0) saturate(1) hue-rotate(0deg) invert(0) opacity(1) brightness(1) contrast(2) blur(1px);
+    }*/
+    .clock { margin: 0 auto; border: 40px solid #CCCCCC; width: 1265px; height: 600px; border-radius: 45px; background-color: black; }
+    .display { margin: 50px auto; width: 1180px; height: 499px; position: relative; }
     .digit { background-image: url(images/digits.png); position: absolute; }
     .hour-ten { top: 0; left: 0; }
     .hour-one { top: 0; left: 273px; }
@@ -26,20 +32,35 @@
 </head>
 <body>
   <div class="clock">
-    <div class="digit hour-ten d0"></div>
-    <div class="digit hour-one d0"></div>
-    <div class="digit dots"></div>
-    <div class="digit min-ten d0"></div>
-    <div class="digit min-one d0"></div>
+    <div class="display">
+      <div class="digit hour-ten d0"></div>
+      <div class="digit hour-one d0"></div>
+      <div class="digit dots"></div>
+      <div class="digit min-ten d0"></div>
+      <div class="digit min-one d0"></div>
+    </div>
   </div>
+</div>
   <script type="text/javascript">
+    var offset = 0;
+    var tzCode = '{{.Timezone}}';
     var displayDots = false;
     update();
     setInterval(update, 1000);
     
     function update() {
-      var date = new Date();
-      var hours = date.getHours();
+      var now = new Date();
+      // Adjust the time displayed to the timezone code if specified and valid. Otherwise use local time.
+      if (tzCode) {
+        var adjusted = new Date(now.toString().split("").reverse().join("").substr(14).split("").reverse().join("") + tzCode);
+        if (adjusted.toString() !== "Invalid Date") {
+          offset = Math.round((now.getTime() - adjusted.getTime()) / 3600000);
+        }
+      }
+      var hours = now.getHours() + offset;
+      if (hours < 0) {
+        hours = 24 + hours;
+      }
       var hoursStr = hours.toString();
       var hourTen = "0";
       var hourOne = hoursStr;
@@ -47,7 +68,7 @@
         hourTen = hoursStr[0];
         hourOne = hoursStr[1];
       }
-      var minutesStr = date.getMinutes().toString();
+      var minutesStr = now.getMinutes().toString();
       var minTen = "0";
       var minOne = minutesStr;
       if (minutesStr.length > 1) {
